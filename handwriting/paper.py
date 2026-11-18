@@ -1,4 +1,5 @@
-import numpy as np
+import random
+
 from PIL import Image, ImageDraw
 
 from .style import PAPER_LINED, PAPER_SQUARED
@@ -15,24 +16,21 @@ MARGIN_LINE_COLOR = (196, 92, 92)
 SQUARE_COLOR = (205, 216, 236)
 
 
-def _add_grain(img: Image.Image, strength: int = 6) -> Image.Image:
-    arr = np.asarray(img).astype(np.int16)
-    noise = np.random.randint(-strength, strength + 1, arr.shape[:2])
-    arr[..., 0] += noise
-    arr[..., 1] += noise
-    arr[..., 2] += noise
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+def _add_grain(img: Image.Image, alpha: float = 0.035) -> Image.Image:
+    """Subtle per-pixel grain, blended toward random gray noise (no numpy needed)."""
+    noise = Image.effect_noise(img.size, 40).convert("RGB")
+    return Image.blend(img, noise, alpha)
 
 
-def _add_vignette(img: Image.Image, strength: float = 0.18) -> Image.Image:
+def _add_vignette(img: Image.Image, strength: float = 0.12) -> Image.Image:
+    """Darken the corners slightly, built from PIL's built-in radial gradient."""
+    from PIL import ImageChops
+
     w, h = img.size
-    y, x = np.ogrid[0:h, 0:w]
-    cx, cy = w / 2, h / 2
-    dist = np.sqrt(((x - cx) / (w / 2)) ** 2 + ((y - cy) / (h / 2)) ** 2)
-    mask = np.clip(1 - strength * np.clip(dist - 0.55, 0, None), 0, 1)
-    arr = np.asarray(img).astype(np.float32)
-    arr *= mask[..., None]
-    return Image.fromarray(arr.astype(np.uint8))
+    grad = Image.radial_gradient("L").resize((w, h))  # 0 at center, ~255 at edges
+    mask = grad.point(lambda g: max(0, 255 - int(strength * g)))
+    mask_rgb = Image.merge("RGB", (mask, mask, mask))
+    return ImageChops.multiply(img, mask_rgb)
 
 
 def new_page(line_spacing: int, paper_kind: str = PAPER_LINED) -> Image.Image:
@@ -51,17 +49,17 @@ def new_page(line_spacing: int, paper_kind: str = PAPER_LINED) -> Image.Image:
 
     draw.line([(RED_MARGIN_X, 20), (RED_MARGIN_X, PAGE_H - 20)], fill=MARGIN_LINE_COLOR, width=2)
 
-    img = _add_grain(img, strength=5)
+    img = _add_grain(img, alpha=0.035)
     img = _add_vignette(img, strength=0.12)
     return img
 
 
-def finish_page(img: Image.Image, rng) -> Image.Image:
+def finish_page(img: Image.Image, rng: random.Random) -> Image.Image:
     """Final photo-realism pass: tiny tilt + grain + soft blur."""
     from PIL import ImageFilter
 
     angle = rng.uniform(-0.5, 0.5)
     img = img.rotate(angle, resample=Image.BICUBIC, expand=False, fillcolor=PAPER_BG)
     img = img.filter(ImageFilter.GaussianBlur(radius=0.4))
-    img = _add_grain(img, strength=3)
+    img = _add_grain(img, alpha=0.02)
     return img
