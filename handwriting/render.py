@@ -6,7 +6,6 @@ from . import paper
 from .style import HandwritingStyle
 from .textshape import BULLET, HEADING, PARA, parse_blocks, wrap_text
 
-TEXT_LEFT = paper.RED_MARGIN_X + 40
 PARA_INDENT = 60
 BULLET_INDENT = 50
 BULLET_CONT_INDENT = 78
@@ -137,7 +136,8 @@ def render_notes(text: str, style: HandwritingStyle, seed: int | None = None) ->
     writer_normal = _GlyphWriter(font_normal, style, rng)
     writer_heading = _GlyphWriter(font_heading, style, rng)
 
-    max_width = paper.TEXT_RIGHT - TEXT_LEFT
+    text_left = paper.text_left_margin(style.paper)
+    max_width = paper.TEXT_RIGHT - text_left
     layout_lines = _build_layout_lines(text, writer_normal, writer_heading, max_width)
     pages = _paginate(layout_lines)
 
@@ -149,9 +149,9 @@ def render_notes(text: str, style: HandwritingStyle, seed: int | None = None) ->
             text_line = line["text"]
             if line["centered"]:
                 width = writer.line_width(text_line)
-                x = TEXT_LEFT + max(0, (max_width - width) / 2)
+                x = text_left + max(0, (max_width - width) / 2)
             else:
-                x = TEXT_LEFT + line["indent"]
+                x = text_left + line["indent"]
             end_x = writer.draw(bg, x, y_baseline, text_line)
             if line["underline"]:
                 writer.wavy_underline(bg, x, end_x, y_baseline + 8)

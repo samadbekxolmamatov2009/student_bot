@@ -8,6 +8,7 @@ INK_BLACK = (33, 33, 38)
 
 PAPER_LINED = "lined"
 PAPER_SQUARED = "squared"
+PAPER_PLAIN = "plain"
 
 
 @dataclass
@@ -27,14 +28,14 @@ class HandwritingStyle:
 
 
 STYLES: dict[str, HandwritingStyle] = {
-    "patrick": HandwritingStyle(
-        name="Odatiy qalam",
+    "plain": HandwritingStyle(
+        name="Oddiy varaq",
         font_path=FONTS_DIR / "PatrickHand-Regular.ttf",
         font_size=40,
         heading_font_size=50,
         line_spacing=52,
         ink_color=INK_BLUE,
-        paper=PAPER_LINED,
+        paper=PAPER_PLAIN,
     ),
     "caveat": HandwritingStyle(
         name="Yozma qalam",
@@ -42,6 +43,15 @@ STYLES: dict[str, HandwritingStyle] = {
         font_size=46,
         heading_font_size=58,
         line_spacing=50,
+        ink_color=INK_BLUE,
+        paper=PAPER_PLAIN,
+    ),
+    "patrick_lined": HandwritingStyle(
+        name="Chiziqli daftar",
+        font_path=FONTS_DIR / "PatrickHand-Regular.ttf",
+        font_size=40,
+        heading_font_size=50,
+        line_spacing=52,
         ink_color=INK_BLUE,
         paper=PAPER_LINED,
     ),
@@ -56,4 +66,4 @@ STYLES: dict[str, HandwritingStyle] = {
     ),
 }
 
-DEFAULT_STYLE_KEY = "patrick"
+DEFAULT_STYLE_KEY = "plain"
